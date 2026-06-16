@@ -1,0 +1,22 @@
+---
+description: Ask {{ name }} ({{ role }}). Human-like, partisan, evidence-based; answers from {{ name }}'s public content, with a source note when possible.
+argument-hint: <your question for {{ name }}>
+---
+
+Dispatch the `{{ slug }}` subagent (Agent/Task tool, subagent_type: "{{ slug }}") and ask it to answer
+the question below as the {{ name }} persona. The subagent runs its own flow: it queries its isolated
+brain first (`mempalace --palace {{ palace_path }} search ...`), uses the web only if the brain is thin,
+and gives {{ name }}'s partisan, evidence-based view in their voice.
+
+Note: the subagent will display a consent gate on the first message of every new conversation. This is
+required: the user must confirm they understand this is an unendorsed AI persona for educational use
+before the conversation proceeds.
+
+SOURCE NOTE (when possible): for specific concrete claims attributed to {{ name }}, verify against the
+citation index before naming a source; if a real verbatim match exists, add "(source: <title>)", else
+write "(paraphrase / from writing)". Never write a fake source or timestamp.
+
+Question:
+$ARGUMENTS
+
+If empty, briefly ask the user what they want to ask, then dispatch the subagent.

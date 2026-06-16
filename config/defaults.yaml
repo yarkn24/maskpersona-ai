@@ -1,0 +1,29 @@
+# Non-persona defaults. These are framework-level (not per-figure) and rarely change.
+# Kept here (not in code) so model ids and thresholds can be updated without touching logic.
+
+transcription:
+  # openai-whisper large-v3 is ONE multilingual model (99 languages), so there is no per-language
+  # "pack" to install. Language is auto-detected per video, or pinned via persona language.content.
+  model: "large-v3"          # weights download automatically, no token
+  language: "auto"           # auto-detect per video (overridden by persona language.content if set)
+
+voice:
+  # Speaker-embedding via sherpa-onnx (no account, no token; CPU). Default is wespeaker ResNet34-LM
+  # trained on VoxCeleb2 (145 nationalities, multilingual), the same model family the pyannote path
+  # used. It captures voice TIMBRE not words, so it works for any language (Turkish, Spanish, ...).
+  # Routing by persona language.content: Chinese -> wespeaker_zh_cnceleb_resnet34_LM.onnx; everything
+  # else -> this default. "auto" below = let the language router decide.
+  embedding_model: "auto"
+  match_threshold: 0.50
+  min_solo_seconds: 120
+
+brain:
+  search_results: 6
+
+eval:
+  num_questions: 100
+  pass_threshold: 0.6
+  flexibility_threshold: 0.8
+
+# Where brains live (outside the git tree). <slug> is substituted at runtime.
+brain_root: "~/personaforge_brains"
