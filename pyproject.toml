@@ -1,0 +1,62 @@
+[project]
+name = "maskpersona-ai"
+version = "0.1.0"
+description = "Build a grounded, evidence-based persona advisor bot of any public figure from their public content."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+
+# Pinned for reproducible installs. The installer locks exact resolved
+# versions into installer/lock/parts.lock.json so every machine builds the same system.
+dependencies = [
+    "pydantic>=2.6,<3",
+    "pyyaml>=6.0,<7",
+    "jinja2>=3.1,<4",
+    "langgraph>=1.0,<2",
+    "langgraph-checkpoint-sqlite>=2.0,<4",
+    "langsmith>=0.1.80,<1",
+    "mempalace>=3.3,<4",
+    "yt-dlp>=2024.1.0",
+    "numpy>=1.26,<3",
+]
+
+[project.optional-dependencies]
+# Heavy local ML (transcription + voice embedding). Neither needs an account or access token:
+# openai-whisper auto-downloads its weights from a CDN, and sherpa-onnx pulls a public ONNX speaker
+# model (wespeaker VoxCeleb) from a GitHub release. `pip install maskpersona-ai[voice]` is all that is
+# needed for voice isolation to run. Kept optional to keep the core light.
+voice = [
+    "openai-whisper>=20231117",
+    "sherpa-onnx>=1.10",
+]
+# Optional offline eval judge.
+eval = [
+    "deepeval>=1.0,<2",
+]
+# Optional web search via Exa (used by persona agents when the brain is thin).
+# Requires EXA_API_KEY in .env. Without it the agent falls back to WebSearch/WebFetch.
+search = [
+    "exa-py>=1.1,<2",
+]
+demo = [
+    "rich>=13.0,<15",
+    "ascii_magic>=2.3,<3",
+    "Pillow>=10.0,<12",
+]
+dev = [
+    "pytest>=8.0",
+    "rich>=13.0,<15",
+]
+
+[project.scripts]
+maskpersona-ai = "installer.bootstrap:main"
+
+[tool.setuptools.packages.find]
+include = ["agents*", "audit*", "auditor*", "brain*", "citation*", "config*", "eval*", "installer*", "pipeline*", "templates*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

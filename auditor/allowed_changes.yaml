@@ -1,0 +1,27 @@
+# What the self-improving auditor may and may not change. The loop is bounded by this allowlist;
+# anything not explicitly allowed is refused, logged, and skipped.
+
+allow:
+  # strengthen/re-order the reusable behavior blocks when a dimension scores low
+  - "templates/persona-agent.md.j2"
+  # tune the re-injection reminder block
+  - "agents/_injection/preamble.md"
+forbid:
+  - "config/persona.example.yaml" # John Doe example; other rules prohibit editing it
+  - "demo/**"                     # never edit the fictional demo
+  - "specs/constitution.md"       # never weaken the constitution
+  - "specs/**"                    # never rewrite the spec system
+  - "eval/RUBRIC.md"              # never change the rubric it is graded by
+  - "**/.env"                     # never touch secrets
+  - "**/*paths*"                  # never edit path resolution
+
+deny_actions:
+  - "fabricate_persona_fact"      # never invent a quote/number/event
+  - "change_rubric"
+  - "edit_paths_or_secrets"
+  - "touch_runtime_architecture"
+
+stop_condition:
+  all_dims_pass: true             # every dim >= its threshold
+  max_rounds: 5
+  no_improvement_rounds: 2        # stop if 2 rounds in a row do not improve

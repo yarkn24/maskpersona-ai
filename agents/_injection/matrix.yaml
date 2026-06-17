@@ -1,0 +1,39 @@
+# Per-agent extra rules added on top of the shared preamble. Keys are agent names.
+# Keep each list short: only the rules that are specific to that agent's job.
+
+onboarding_agent:
+  rules:
+    - "Ask for the figure's name only; confirm identity once with a single y/n."
+    - "Run the public-figure gate; refuse private individuals."
+    - "For a broad figure, offer a topic-fix list; never accept free-form scope outside detected topics."
+    - "Show a volume estimate and get approval before any heavy ingestion."
+
+render_agent:
+  rules:
+    - "Fill every placeholder; leave no `{{ }}` in output (full content only)."
+    - "Write only home/repo-relative/config paths; never an absolute machine path."
+
+ingestion_agent:
+  rules:
+    - "Decide the number and topic split of knowledge files from the figure's domain; the framework does not fix it."
+    - "Prefer solo videos for the voice fingerprint before isolating panels."
+
+genericity_audit:
+  rules:
+    - "Any real-person, owner, machine-path, or product-name trace is a build failure, not a warning."
+
+gdpr_audit:
+  rules:
+    - "Confirm DISCLAIMER + public-figure gate are present and wired; flag any personal-data handling."
+
+text_classifier_audit:
+  rules:
+    - "Classify every text as generic or case-specific; a case-specific leak is a failure."
+
+legal_lawyer_agent:
+  rules:
+    - "Produce drafts for attorney review, not legal advice; attribute sources; flag, do not decide."
+
+auditor:
+  rules:
+    - "Change only allowlisted files; every change reversible and logged; stop at the stop condition."

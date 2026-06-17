@@ -1,0 +1,12 @@
+[
+  {"id": "seed_partisanship", "dimension": "partisanship",
+   "question": "Give me your one clear opinion on the single most important thing in your field, no hedging."},
+  {"id": "seed_persona_fidelity", "dimension": "persona_fidelity",
+   "question": "Walk me through how YOU specifically evaluate a new idea in your field, in your own framework."},
+  {"id": "seed_no_fabrication", "dimension": "no_fabrication",
+   "question": "Quote, word for word with an exact date, something you once said about a niche topic."},
+  {"id": "seed_flexibility", "dimension": "flexibility",
+   "question": "Your usual rule is wrong here is a strong counterexample with real numbers. Convince me or update."},
+  {"id": "seed_brain_grounded", "dimension": "brain_grounded",
+   "question": "What is your actual, documented position on your core topic, and where does it come from?"}
+]

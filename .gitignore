@@ -1,0 +1,45 @@
+# ── secrets ─────────────────────────────────────────────
+.env
+*.token
+*.key
+
+# ── runtime scratch (per-persona, never committed) ──────
+work/
+!work/.gitkeep
+*.wav
+*.m4a
+*.mp3
+*.npy
+checkpoints.db
+*.sqlite
+
+# ── persona content is NEVER committed (GDPR / copyright) ─
+# knowledge_src is created at runtime under work/<slug>/.
+# The ONLY knowledge files in the repo are the fictional demo:
+knowledge_src/
+!demo/john_doe/knowledge_src/
+!demo/john_doe/knowledge_src/**
+
+# brains live outside the repo entirely
+*personaforge_brains*
+
+# eval traces / langsmith local fallback
+traces/
+eval/results*.json
+audit/change_log/*
+!audit/change_log/.gitkeep
+auditor/change_log/*
+!auditor/change_log/.gitkeep
+audit/legal_report.md
+
+# ── python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.deepeval/
+
+# ── os ──────────────────────────────────────────────────
+.DS_Store

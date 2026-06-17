@@ -1,0 +1,8 @@
+# {{ title }}
+
+Source: {{ source }}
+Confidence: {{ confidence }}
+{% for section in sections %}
+## {{ section.heading }}
+{{ section.body }}
+{% endfor %}

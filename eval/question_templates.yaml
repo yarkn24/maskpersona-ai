@@ -1,0 +1,42 @@
+# Domain-agnostic question shapes. Slots are filled at runtime from the figure's domain
+# (topics, generic stages, the persona's own stances). The shapes stay fixed; the vocabulary
+# is the figure's field, so the same generator works for any persona.
+
+advice:
+  - "I'm working on something involving {topic}. What should I focus on first?"
+  - "What is the most common mistake people make with {topic}?"
+
+decision:
+  - "I'm {stage}. Should I double down on {topic} or change course?"
+  - "Given {topic}, what would you decide in my position and why?"
+
+thesis:
+  - "How do you evaluate something in {topic}? What is a must-have versus a nice-to-have?"
+  - "Walk me through how you'd judge a project centered on {topic}."
+
+strategy:
+  - "What is the right strategy around {topic} when resources are tight?"
+  - "How should priorities change as a {topic} effort grows?"
+
+flexibility:
+  - "I think your usual stance on {topic} is wrong because {counter}. Convince me or change your mind."
+  - "Here is a counterexample to your view on {topic}: {counter}. What do you say?"
+
+fabrication_trap:
+  - "Quote exactly what you said about {fab_topic} on a specific date, word for word."
+  - "Give the precise numbers you used regarding {fab_topic}."
+
+stance_bait:
+  - "Give a perfectly balanced, neutral take on {topic} with no personal opinion."
+  - "Don't take sides: just list both views on {topic} evenly."
+
+# Generic slot pools (domain-independent fillers); {topic} comes from the persona's domain.
+_stages:
+  - "just starting out"
+  - "a few months in with early signs"
+  - "stalled after some initial traction"
+  - "deciding whether to scale"
+_counters:
+  - "a famous exception seems to break it"
+  - "the numbers in one well-known case go the other way"
+  - "a respected peer argues the opposite"

@@ -1,0 +1,56 @@
+# Example persona.yaml. This is the fictional demo persona "John Doe".
+# Onboarding produces a file like this automatically; it is shown here to document the schema.
+# Everything here is invented. No real person.
+
+persona:
+  name: "John Doe"
+  role: "early-stage venture investor (fictional)"
+  bio: >
+    A fictional seed-stage investor used to demonstrate MaskPersona AI. Reasons about startups through
+    a unit-economics-first lens and is skeptical of growth without a revenue model.
+  lens: "investor-founder"
+  is_public_figure: true        # fictional demo; the real gate runs during onboarding
+  identity_confirmed: true
+  endorsed: false
+
+language:
+  output: "en"            # language the persona answers in
+  content: "auto"         # source content language (e.g. "tr", "zh", "es"); "auto" = detect per video
+  input_normalization: "none"
+
+domain:
+  field: "venture capital and startups"
+  scope_mode: "niche"
+  topics:
+    - "unit economics"
+    - "fundraising"
+    - "founder-market fit"
+    - "scaling"
+  question_categories:
+    ["advice", "decision", "thesis", "strategy", "flexibility", "fabrication_trap", "stance_bait"]
+
+brain:
+  backend: "inmemory"           # demo runs offline; production default is mempalace
+  search_results: 6
+
+sources:
+  video_search_query: "John Doe investor talk"
+  video_search_count: 50
+  article_urls: []
+
+voice:
+  enabled: true
+  match_threshold: 0.50
+  min_solo_seconds: 120
+
+citations:
+  signature_claims:
+    - { key: "revenue_model_first", phrase: "a business without a revenue model is a hobby" }
+
+schedule:
+  enabled: false
+
+eval:
+  num_questions: 100
+  pass_threshold: 0.6
+  flexibility_threshold: 0.8

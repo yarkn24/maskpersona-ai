@@ -1,0 +1,35 @@
+MaskPersona AI
+Copyright (c) 2026 MaskPersona AI contributors
+Licensed under the MIT License (see LICENSE).
+
+This product depends on third-party software. The code dependencies below use permissive licenses
+generally compatible with MIT. Verify the exact license at the pinned version before redistribution;
+generate an authoritative list from your lockfile (e.g. `pip-licenses`).
+
+Core dependencies (pinned in pyproject.toml), typical licenses:
+  - pydantic ............. MIT
+  - PyYAML ............... MIT
+  - Jinja2 ............... BSD-3-Clause
+  - langgraph ........... MIT
+  - langgraph-checkpoint-sqlite . MIT
+  - langsmith ........... MIT
+  - mempalace ........... MIT (PyPI)
+  - yt-dlp .............. Unlicense (public domain)
+  - numpy ............... BSD-3-Clause
+
+Optional "voice" extra:
+  - openai-whisper ...... MIT (library code)
+  - sherpa-onnx ......... Apache-2.0 (library code; pulls a public ONNX speaker model, no token)
+
+Optional "eval" extra:
+  - deepeval ............ Apache-2.0
+
+Optional "search" extra:
+  - exa-py .............. MIT
+
+IMPORTANT: model weights are NOT covered by this project's license.
+The speaker-embedding model (wespeaker VoxCeleb, ONNX) and the speech-to-text model weights are
+downloaded at runtime from public release assets and a CDN, and carry THEIR OWN licenses. No account
+or access token is required to obtain them, but you remain responsible for honoring each weight's
+license before redistribution. This project does not redistribute any model weights or third-party
+content.
