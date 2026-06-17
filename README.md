@@ -64,7 +64,7 @@ License: [PolyForm Noncommercial 1.0.0](LICENSE) (free for personal/non-commerci
 
 ---
 
-## Credits
+## Tech Used
 
 MaskPersona AI is built on top of excellent open-source work. Standing on these shoulders:
 
