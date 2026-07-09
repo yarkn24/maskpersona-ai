@@ -14,6 +14,11 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+# Anchors work_dir to the repo root regardless of the process's CWD (previously `Path("work")` was
+# CWD-relative, so running `python -m pipeline.run_ingest` from any directory other than the repo
+# root scattered state under a stray `work/` and broke --resume).
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
 
 def slugify(name: str) -> str:
     """A filesystem/command/wing-safe slug derived from a display name."""
@@ -104,6 +109,7 @@ class Sources(BaseModel):
 class Voice(BaseModel):
     enabled: bool = True
     embedding_model: str = ""  # default from config/defaults.yaml
+    whisper_model: str = ""  # default from config/defaults.yaml (transcription.model, e.g. "large-v3")
     fingerprint_path: str = ""  # default work/<slug>/voice_fingerprint.npy
     match_threshold: float = 0.50  # cosine similarity to accept a panel turn
     min_solo_seconds: int = 120  # min clean solo audio to trust a fingerprint
@@ -150,6 +156,15 @@ class Eval(BaseModel):
     langsmith_project: str = ""  # default personaforge-<slug>
 
 
+class QA(BaseModel):
+    """Question/answer pairs mined from knowledge chunks (see brain/qa_pairs.py). The answer is
+    always the chunk's own text; questions_per_chunk bounds how many phrasings get generated."""
+    questions_per_chunk: int = 2
+    qa_pairs_path: str = ""  # default work/<slug>/qa_pairs.jsonl
+
+    _v = field_validator("qa_pairs_path")(_reject_machine_path)
+
+
 class FidelityGate(BaseModel):
     """Runtime self-check: before sending, the persona rates how well its draft is grounded in the
     figure's public content, and gates on that score. Token-efficient by design (the persona self-rates
@@ -181,6 +196,7 @@ class PersonaConfig(BaseModel):
     schedule: Schedule = Field(default_factory=Schedule)
     sizing: Sizing = Field(default_factory=Sizing)
     eval: Eval = Field(default_factory=Eval)
+    qa: QA = Field(default_factory=QA)
     fidelity: FidelityGate = Field(default_factory=FidelityGate)
 
     @model_validator(mode="after")
@@ -198,8 +214,10 @@ class PersonaConfig(BaseModel):
             self.schedule.label = f"personaforge.{slug}.train"
         if not self.eval.langsmith_project:
             self.eval.langsmith_project = f"personaforge-{slug}"
+        if not self.qa.qa_pairs_path:
+            self.qa.qa_pairs_path = f"work/{slug}/qa_pairs.jsonl"
         return self
 
     @property
     def work_dir(self) -> Path:
-        return Path("work") / self.persona.slug
+        return REPO_ROOT / "work" / self.persona.slug

@@ -1,9 +1,9 @@
 [project]
 name = "maskpersona-ai"
-version = "0.1.0"
+version = "1.1.0"
 description = "Build a grounded, evidence-based persona advisor bot of any public figure from their public content."
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "PolyForm-Noncommercial-1.0.0" }
 requires-python = ">=3.11"
 
 # Pinned for reproducible installs. The installer locks exact resolved
@@ -18,6 +18,7 @@ dependencies = [
     "mempalace>=3.3,<4",
     "yt-dlp>=2024.1.0",
     "numpy>=1.26,<3",
+    "pysbd>=0.3.4,<1",
 ]
 
 [project.optional-dependencies]
@@ -37,6 +38,12 @@ eval = [
 # Requires EXA_API_KEY in .env. Without it the agent falls back to WebSearch/WebFetch.
 search = [
     "exa-py>=1.1,<2",
+]
+# Optional semantic layer for QA-pair retrieval (brain/qa_search.py). Without this extra, QA search
+# still works via idf-weighted lexical matching alone (0 extra deps); installing it blends in local,
+# offline embedding similarity (intfloat/multilingual-e5-small, MIT, ~100 languages, no API key).
+qa = [
+    "sentence-transformers>=3.0,<4",
 ]
 demo = [
     "rich>=13.0,<15",

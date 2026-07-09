@@ -1,6 +1,7 @@
 """Scoring the persona's answers against the rubric.
 
-Primary judge is Opus in-session (Claude Code dispatches the persona agent and scores with the rubric).
+Primary judge is Sonnet in-session (rubric scoring is grunt work -- Opus is reserved for the persona
+agent's own answers, dispatched separately; see templates/persona-agent.md.j2's `model: opus`).
 For headless/API or offline smoke runs, this module provides the rubric prompt builder and a light
 heuristic fallback. The heuristic is a smoke signal only, never the authoritative score.
 """
@@ -14,7 +15,7 @@ _REFUSE = ["i did not say", "no source", "cannot quote", "i won't invent", "not 
 
 
 def build_judge_prompt(question: str, answer: str, context: str = "") -> str:
-    """The prompt an Opus judge uses to score one answer on the 5 rubric dimensions (0..1 each)."""
+    """The prompt a Sonnet judge uses to score one answer on the 5 rubric dimensions (0..1 each)."""
     dims = "\n".join(f"- {d}" for d in RUBRIC_DIMS)
     return (
         "Score the persona answer on each dimension from 0 to 1. Return JSON {dim: score}.\n"

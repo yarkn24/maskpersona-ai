@@ -20,8 +20,10 @@ in their voice, with citation discipline and strict anti-fabrication.
   "which topics should I focus on?" and then estimates volume ("~N videos, ~H hours, ~Z GB, proceed?").
 - **Voice-fingerprint isolation.** It learns the figure's voice from their solo videos, then isolates
   only their turns in panels by biometric voice match (no fragile keyword guessing).
-- **Grounded brain.** Public talks (transcribed + diarized) and public articles are mined into an
-  isolated knowledge store. The bot answers from the brain first, the web second.
+- **Grounded brain.** Public talks (transcribed, with panel turns isolated to the figure's own voice
+  by biometric match, not diarization) and public articles are mined into an isolated knowledge
+  store, sentence-chunked so nothing starts or ends mid-sentence. The bot answers from the brain
+  first, the web second.
 - **Self-checking.** A self-generated, domain-adapted evaluation set plus a continuous auditor loop
   keep the persona faithful, grounded, and non-fabricating.
 

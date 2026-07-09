@@ -17,6 +17,13 @@ with SQLite checkpointing (`pipeline/checkpoint.py`) and human-in-the-loop inter
 10. `brain_ingest` mine into the brain and sync.
 11. `refresh_citations` rebuild the citation index from signature claims.
 
+Transcripts (`transcribe`, `isolate_by_voice`) are written through `brain/sentence_chunker.py`
+(pysbd, 0 deps): every chunk boundary is a real sentence boundary, and a dropped panel turn's time
+gap is never spliced into one fake sentence -- see `docs/QA_GENERATION.md` for the follow-on QA-pair
+step, which is a separate, LLM-dependent script (`pipeline/qa_gen.py`) run after ingestion, not a
+graph node (the graph stays deterministic/local-only, matching `eval/run_eval.py`'s injectable
+answer_fn pattern rather than adding a new LLM-call convention to the graph).
+
 ## Human gates (bounded; pick from offered options)
 After `discover` (confirm identity + video count), after `estimate_volume` (approve volume), after
 `isolate_by_voice` (include low-confidence turns?). See `pipeline/interrupts.py`.

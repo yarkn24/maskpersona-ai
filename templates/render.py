@@ -33,6 +33,7 @@ def _context(cfg) -> dict:
         "output_language": _LANG.get(cfg.language.output, cfg.language.output),
         "palace_path": cfg.brain.palace_path,
         "search_results": cfg.brain.search_results,
+        "qa_pairs_path": cfg.qa.qa_pairs_path,
         "topics": cfg.domain.topics,
         "fidelity_enabled": cfg.fidelity.enabled,
         "fidelity_send_threshold": cfg.fidelity.send_threshold,

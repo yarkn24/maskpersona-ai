@@ -2,9 +2,16 @@
 
 Core run_eval takes injectable answer_fn and judge_fn, so it is testable without any LLM:
 - production answer_fn dispatches the persona agent (Opus in-session, or the Anthropic API),
-- production judge_fn scores with the Opus judge (eval/judge.build_judge_prompt),
+- production judge_fn scores with the Sonnet judge (eval/judge.build_judge_prompt; rubric scoring
+  is grunt work, Opus stays reserved for the persona's own answers),
 - tests pass fakes.
 Every record is traced (LangSmith if configured, else local JSONL).
+
+Token note: this loop calls answer_fn once per question (default `eval.num_questions=100`), and each
+call re-sends the full persona system prompt (~125 lines, templates/persona-agent.md.j2). If the
+call site dispatches via the Anthropic API directly (rather than a Claude Code session), mark the
+system prompt block with `cache_control` (prompt caching) so repeated dispatches only pay the full
+prompt cost once per cache TTL, not once per question.
 """
 from __future__ import annotations
 
