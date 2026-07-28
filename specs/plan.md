@@ -31,8 +31,8 @@ The user is free only within borders the framework draws. Enforced by: (1) schem
 - `brain/` abstract `Brain` adapter; default `mempalace_adapter`; `inmemory_adapter` for offline tests.
 - `templates/` Jinja2 agent/command/core templates + abstract `prompt_patterns/`.
 - `agents/` swarm (onboarding, render, ingestion, audits, legal, auditor) + `_injection/` hidden layer.
-- `pipeline/` LangGraph nodes: discover, assess_breadth, scope_gate, estimate_volume,
-  classify_solo_vs_panel, extract_voice_fingerprint, isolate_by_voice, harvest_articles,
+- `pipeline/` LangGraph nodes (in pipeline/nodes.py): discover, assess_breadth, estimate_volume,
+  classify_solo_vs_panel, transcribe, extract_voice_fingerprint, isolate_by_voice, harvest_articles,
   write_knowledge, brain_ingest, refresh_citations.
 - `citation/` verbatim phrase -> source+timestamp, gated by a persona-only corpus.
 - `eval/` domain-adapted question generator, runner, judge, LangSmith-or-local tracing.
@@ -43,9 +43,10 @@ The user is free only within borders the framework draws. Enforced by: (1) schem
 
 ## Hidden injection layer (abstract pattern, no verbatim third-party text)
 
-Every dispatched agent gets a prepended, user-invisible preamble with four mechanisms:
-re-injection-every-turn (identity + non-negotiables), anti-drift context-feed (needed config/prior
-output auto-fed, never trust memory), first-message block (special first-call behavior), role-lock.
+Every dispatched agent gets a prepended, user-invisible preamble with five mechanisms:
+non-negotiables re-injection (identity + core rules restated before every action), anti-drift
+context-feed (needed config/prior output auto-fed, never trust memory), gates-first (run all gates
+before work), role-lock, and safeguards-outrank-role-lock.
 Implemented by `agents/_injection/{preamble.md,inject.py,matrix.yaml}`.
 
 ## Tech stack

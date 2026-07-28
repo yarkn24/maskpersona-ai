@@ -34,7 +34,8 @@ data. Treat it as the highest-sensitivity processing in the system:
   systematic matching of sources triggers a Data Protection Impact Assessment, and where high residual
   risk remains, prior consultation with the supervisory authority (Art. 36). Run it before processing.
 - **Inform the data subject (Art. 14).** Because the data is gathered from third-party public sources
-  rather than from the figure, the Art. 14 information duty applies (the GDPR parallel to KVKK Art. 10);
+  rather than from the figure, the Art. 14 information duty applies (equivalent transparency/notice
+  obligations exist under most modern data-protection frameworks);
   the disproportionate-effort exception is not automatic.
 - **UK.** Under UK GDPR the result is the same: ICO biometric-recognition guidance (Mar 2024) treats a
   voiceprint as special-category data needing explicit consent, and the Data (Use and Access) Act 2025
@@ -47,44 +48,34 @@ data. Treat it as the highest-sensitivity processing in the system:
   (GDPR Art. 25(2)) favors leaving voice off unless you have explicit consent; the shipped default is on.
 - Some jurisdictions have dedicated biometric-privacy statutes in addition to GDPR.
 
-## Türkiye / KVKK (6698 sayili Kanun)
-If you run persona-forge against a real person from Turkey (or as a Turkish actor processing data of
-people in the EU), Turkish data-protection law (KVKK, Law No. 6698) applies, in addition to any GDPR
-exposure. Key points a Turkish user must know. The publisher ships no real data and is not the veri
-sorumlusu, so these duties fall on the user, not the publisher; the criminal exposure below likewise
-requires the user's own act and intent:
-- **The voice fingerprint is "ozel nitelikli kisisel veri" (special-category biometric data), KVKK
-  Art. 6.** As amended by Law No. 7499 (in force 1 June 2024), special-category data may be processed
-  only on one of the Art. 6 bases: acik riza (explicit consent); a basis expressly provided in law;
-  physical impossibility; the data subject's own act of making it public (alenilestirme), but only in
-  line with that intent; necessity for the establishment, exercise, or protection of a right; or the
-  health, employment, and foundation/association grounds. For an unconsented voice fingerprint of a
-  public figure none of the non-consent bases fit, so in practice acik riza is required. With no
-  explicit consent, run with `voice.enabled: false`; the system then builds no biometric fingerprint.
-- **"Kamuya mal olmus kisi" / aleni icerik is NOT, by itself, a lawful basis.** Although the amended
-  Art. 6 lists alenilestirme as a basis even for special-category data, it applies only "alenilestirme
-  iradesine uygun olmasi kaydiyla" (in line with the person's intent to make public) and is bound by
-  purpose-limitation (amacla baglilik). A figure who published a talk made their speech public, not a
-  biometric voiceprint built from it; fingerprinting for identification is a different purpose, so this
-  basis does not cover it.
-- When you model a real person you are the **veri sorumlusu**: aydinlatma yukumlulugu (Art. 10), veri
-  guvenligi (Art. 12), and retention/deletion (silme/yok etme) duties are yours. Delete `work/<slug>/`
-  and `~/personaforge_brains/<slug>` when done.
-- **Cross-border and exemptions.** The voice models run locally, so audio stays on your machine, but
-  Exa/WebSearch queries about the figure may transfer data abroad (KVKK Art. 9); you own that basis. A
-  non-commercial, clearly labeled research or expression use may fall within KVKK Art. 28's exceptions,
-  but this is fact-specific and does not by itself cover the biometric fingerprinting step.
-- Modeling a real person's voice, name, or image may also breach **kisilik haklari (Turk Medeni Kanunu
-  Art. 24-25)** and expose you to **manevi tazminat (Turk Borclar Kanunu Art. 58)**. Unlawful recording
-  or sharing, disclosing private life, or insulting outputs may implicate **TCK Art. 134, 135-136, and
-  125**; these require your own unlawful act and intent (kast), and accomplice liability (TCK
-  Art. 37-39) needs an intent that publishing a general-purpose, abuse-prohibiting tool does not
-  establish.
-- **Deceased figures.** KVKK protects only living natural persons; the Kurul has held that a deceased
-  person's data is not protected by KVKK as such (KVK Kurulu 18.09.2019, 2019/273). Protection instead
-  runs through **TMK Art. 25 (hatiraya saygi)**: heirs (mirascilar) and close relatives may assert
-  personality-rights claims in their own right, alongside right-of-publicity considerations. KVKK duties
-  attach only where a living person's data is also processed.
+## Jurisdiction-specific data-protection law
+If you are subject to a national or regional data-protection law in addition to GDPR (for example, a
+national implementation, a state biometric statute, or another sectoral law), that law applies to your
+processing. The publisher ships no real data and is not the data controller; these duties fall on the
+user. Key principles that apply across most jurisdictions:
+- **The voice fingerprint is special-category personal data** (biometric data used to uniquely identify
+  a natural person). Most modern data-protection frameworks (GDPR Art. 9, and equivalent provisions
+  elsewhere) require explicit consent or another specific statutory basis to process it. For an
+  unconsented public figure, explicit consent is the only realistic basis. With no explicit consent,
+  run with `voice.enabled: false`; the system then builds no biometric fingerprint.
+- **"Public figure" / "publicly available" is NOT, by itself, a lawful basis for special-category
+  data.** A figure who published a talk made their speech public, not a biometric voiceprint derived
+  from it; purpose-limitation means fingerprinting for identification is a distinct purpose, and the
+  "made public by the data subject" exception does not cover it under GDPR or equivalent frameworks.
+- When you model a real person you are the **data controller**: transparency/notice obligations,
+  security, and retention/deletion duties are yours. Delete `work/<slug>/` and
+  `~/personaforge_brains/<slug>` when done.
+- **Cross-border.** The voice models run locally, so audio stays on your machine, but
+  Exa/WebSearch queries about the figure may transfer data to third-country processors; you own the
+  lawful basis for that transfer. A non-commercial, clearly labeled research use may qualify for
+  exemptions under applicable law, but this is fact-specific and does not by itself cover the biometric
+  fingerprinting step.
+- Modeling a real person's voice, name, or image may also engage **personality rights** and expose you
+  to **non-pecuniary damages** claims under applicable civil law. Post-mortem personality and
+  publicity rights may apply; heirs and close relatives may have independent claims.
+- **Deceased figures.** Many data-protection laws protect only living natural persons; post-mortem
+  protection runs through personality-rights and publicity-rights law, and heirs may assert claims in
+  their own right. Confirm the applicable rules in your jurisdiction.
 
 ## United States
 US right-of-publicity and biometric law is mostly **state law**; the user is responsible for the

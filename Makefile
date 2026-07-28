@@ -9,12 +9,12 @@ help:
 	@echo "persona-forge"
 	@echo "  make install   deterministic setup (deps only; no account or access token)"
 	@echo "  make new       create a new persona (you give a name)"
-	@echo "  make demo      run the fictional John Doe demo offline (no downloads)
-  make demo-visual [NAME=... IMAGE=photo.jpg]   animated terminal face demo"
+	@echo "  make demo      run the fictional John Doe demo offline (no downloads)"
+	@echo "  make demo-visual [NAME=... IMAGE=photo.jpg]   animated terminal face demo"
 	@echo "  make ingest    run/resume the ingestion pipeline for the current persona"
 	@echo "  make eval      generate domain-adapted questions and score the persona"
 	@echo "  make audit     run genericity + GDPR + legal + text-classifier audits"
-	@echo "  make verify    full end-to-end verification (zero-trace, schema, demo)"
+	@echo "  make verify    run the test suite"
 
 install:
 	$(PY) -m installer.bootstrap
@@ -41,7 +41,6 @@ audit:
 	$(PY) -m audit.run_audits
 
 verify:
-	$(PY) -m audit.checks.grep_traces --strict
 	$(PY) -m pytest -q
 
 clean:

@@ -32,9 +32,9 @@ belong to the subject, and it cannot produce speech.
 
 A voice embedding used to uniquely identify a person is generally a **biometric identifier** and, under
 GDPR, a **special category of personal data (Article 9)** for which "manifestly made public" is not a
-basis; explicit consent is the realistic one. Under Turkish law (KVKK Art. 6, as amended by Law 7499 in
-force 1 June 2024) it is "ozel nitelikli kisisel veri" and, for an unconsented public figure, in
-practice requires **acik riza** (explicit consent). In the US it is a "voiceprint" under the Illinois
+basis; explicit consent is the realistic one. Under applicable data-protection law in many jurisdictions,
+a voice fingerprint is special-category personal data for which explicit consent is the only realistic
+lawful basis for an unconsented public figure. In the US it is a "voiceprint" under the Illinois
 **BIPA** (Section 15(b) binds any private entity and carries a private right of action) and the
 Texas/Washington statutes (gated to a commercial purpose); all require notice, prior consent, and a
 retention schedule. "Public figure" and "public content" do **not** by themselves provide a lawful basis
@@ -53,9 +53,9 @@ for processing special-category data.
 When you run persona-forge against a real figure, **you** are the data controller for that processing,
 not this project. "Publicly available" is not, on its own, a lawful basis. You are responsible for the
 lawful basis, retention/deletion, and any commercial or endorsement implications, including
-**post-mortem** personality/publicity rights where they apply. For a deceased figure, KVKK does not
-apply (Turkish protection runs through TMK Art. 25 and heirs); US and other post-mortem publicity rights
-may still apply.
+**post-mortem** personality/publicity rights where they apply. For a deceased figure, post-mortem
+publicity and personality rights may still apply under applicable law in your jurisdiction; heirs may
+also have independent claims.
 
 The data you generate is personal data: transcripts, audio, and the voice fingerprint under
 `work/<slug>/`, plus the mined knowledge brain under `~/personaforge_brains/<slug>`. Delete it when no
@@ -64,11 +64,11 @@ longer needed; `make clean` clears `work/` but not the brain directory, which yo
 ## Your responsibilities
 
 - Comply with the source platforms' terms of service and with applicable law in your jurisdiction,
-  including data protection (GDPR Art. 9, Turkish KVKK Art. 6, US BIPA / state biometric statutes for the
-  voice fingerprint), and right-of-publicity / personality rights. Voice is specifically protected
-  against AI replicas under the **Tennessee ELVIS Act (2024)**, California Civ. Code 3344, and Turkish
-  kisilik haklari (TMK Art. 24-25, with manevi tazminat under TBK Art. 58); post-mortem rights apply in
-  many jurisdictions.
+  including data protection (GDPR Art. 9, US BIPA / state biometric statutes, and other applicable
+  data-protection law for the voice fingerprint), and right-of-publicity / personality rights. Voice is
+  specifically protected against AI replicas under the **Tennessee ELVIS Act (2024)**, California
+  Civ. Code 3344, and personality-rights law in many jurisdictions; post-mortem rights and
+  non-pecuniary damages claims may also apply.
 - Do not present the bot as the real person or imply endorsement, and take extra care with any
   commercial use.
 - Read and follow [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md). Do not use it to harass, defame, deceive,

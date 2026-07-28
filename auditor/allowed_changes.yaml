@@ -6,10 +6,8 @@ allow:
   - "templates/persona-agent.md.j2"
   # tune the re-injection reminder block
   - "agents/_injection/preamble.md"
-  # add a signature claim that cite.py verified against the corpus (data, not prose)
-  - "config/persona.example.yaml#citations.signature_claims"
-
 forbid:
+  - "config/persona.example.yaml" # John Doe example; other rules prohibit editing it
   - "demo/**"                     # never edit the fictional demo
   - "specs/constitution.md"       # never weaken the constitution
   - "specs/**"                    # never rewrite the spec system

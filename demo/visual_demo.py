@@ -15,9 +15,7 @@ Pass any name and a local photo at runtime; nothing here is tied to a specific p
 Generate a face constant from any photo first:
     python demo/gen_face.py path/to/photo.jpg
 
-Screen-record tip (macOS):
-    QuickTime Player -> File -> New Screen Recording
-    Or: brew install asciinema && asciinema rec demo.cast
+To record the terminal output, use any screen-recording tool available on your platform.
 """
 from __future__ import annotations
 

@@ -52,7 +52,7 @@ class ExaSearchClient:
         try:
             from exa_py import Exa
             client = Exa(api_key=self.api_key)
-            topic_str = ", ".join(topics[:4]) if topics else "entrepreneurship investing"
+            topic_str = ", ".join(topics[:4]) if topics else "public talks interviews"
             query = f'{name} talks about {topic_str}'
             response = client.search_and_contents(
                 query,

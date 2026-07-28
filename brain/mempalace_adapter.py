@@ -22,9 +22,9 @@ class MempalaceBrain(Brain):
         self.search_results = search_results
         self.agent = agent
 
-    def _run(self, *args: str) -> str:
+    def _run(self, *args: str, timeout: int = 120) -> str:
         cmd = ["mempalace", "--palace", self.palace, *args]
-        out = subprocess.run(cmd, capture_output=True, text=True)
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         if out.returncode != 0:
             raise RuntimeError(f"mempalace failed: {' '.join(cmd)}\n{out.stderr.strip()}")
         return _ANSI.sub("", out.stdout)
@@ -37,7 +37,8 @@ class MempalaceBrain(Brain):
     def mine(self, knowledge_dir: str | Path) -> int:
         out = self._run("mine", "--wing", self.wing, "--no-gitignore",
                         "--agent", self.agent, str(knowledge_dir))
-        m = re.search(r"(\d+)\s+drawers", out)
+        # CLI prints "Drawers filed: N" here (mine), vs "N drawers" in `status` output below.
+        m = re.search(r"[Dd]rawers\s+filed:\s*(\d+)", out) or re.search(r"(\d+)\s+drawers", out)
         return int(m.group(1)) if m else 0
 
     def search(self, query: str, k: int | None = None) -> list[Hit]:

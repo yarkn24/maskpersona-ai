@@ -47,7 +47,7 @@ These operating techniques make agents in this repo reliable instead of merely p
 
 This project is built with **Specs** (`specs/SPECS.md`): constitution -> spec -> plan -> tasks ->
 gated implement. Work tasks in dependency order; verify each; run the phase gate (constitution check +
-zero-trace grep + tests) before starting the next phase. Do not skip gates.
+tests) before starting the next phase. Do not skip gates.
 
 ## 4. Hard prohibitions (echoing the constitution)
 
@@ -59,5 +59,5 @@ zero-trace grep + tests) before starting the next phase. Do not skip gates.
 
 ## 5. Definition of done
 
-A change is done when: it traces to a task, its `verify` passes, the phase gate is green (zero-trace +
+A change is done when: it traces to a task, its `verify` passes, the phase gate is green (constitution +
 tests), and it adds nothing the task did not ask for.

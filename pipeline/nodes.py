@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 
 from .state import IngestState
+from . import media
 
 
 def discover(state: IngestState) -> dict:
@@ -48,8 +49,7 @@ def assess_breadth(state: IngestState) -> dict:
 def estimate_volume(state: IngestState) -> dict:
     """Rough volume estimate shown to the user before heavy work (avg ~12 min/video, ~15 MB/min audio)."""
     vids = state.get("discovered", [])
-    if state.get("breadth") == "broad" and state.get("scope_topics"):
-        vids = vids  # a real run would filter by topic; estimate stays an upper bound
+    # For broad figures with chosen topics the run ingests a subset; this estimate stays an upper bound.
     n = len(vids)
     hours = round(n * 12 / 60, 1)
     gb = round(n * 12 * 15 / 1024, 2)
@@ -58,38 +58,197 @@ def estimate_volume(state: IngestState) -> dict:
 
 
 def classify_solo_vs_panel(state: IngestState) -> dict:
-    """Tag each video solo/panel by a quick speaker count (precondition for fingerprinting)."""
-    out = []
+    """Tag each video solo/panel by a fast speaker count, so fingerprinting uses only clean solo audio."""
+    cfg = state["config"]
+    out: list[dict] = []
+    errors: list[str] = []
+    if not cfg.voice.enabled:
+        return {"discovered": [dict(v) for v in state.get("discovered", [])]}
+    from .voice import SherpaOnnxEmbedder, cosine
+    audio_dir = cfg.work_dir / "audio"
+    embedder = None
     for v in state.get("discovered", []):
         v = dict(v)
         v.setdefault("kind", "unknown")
+        try:
+            wav = media.load_waveform(media.download_audio(v["url"], audio_dir, v["id"]))
+            if embedder is None:
+                embedder = SherpaOnnxEmbedder(
+                    language=cfg.language.content,
+                    configured_model=cfg.voice.embedding_model or None,
+                )
+            v["kind"] = _speaker_count_kind(wav, embedder, cosine, cfg.voice.match_threshold)
+        except Exception as ex:  # best-effort: an unclassifiable video is left "unknown" and skipped by fingerprint
+            errors.append(f"classify {v.get('id')}: {ex!r}")
         out.append(v)
-    return {"discovered": out}  # real impl runs a fast diarization count; kept lazy/stub here
+    return {"discovered": out, "errors": state.get("errors", []) + errors}
+
+
+def _speaker_count_kind(wav, embedder, cosine, threshold, window_s: float = 3.0, max_windows: int = 8) -> str:
+    """Embed a few evenly spaced windows and greedily cluster by cosine; 'solo' if one speaker dominates."""
+    import numpy as np
+    total = len(wav) / media.SAMPLE_RATE
+    if total < window_s * 2:
+        return "solo"  # too short to host a multi-speaker panel
+    n = min(max_windows, max(2, int(total // (window_s * 4))))
+    clusters: list[list] = []  # each entry: [centroid_vector, count]
+    for s in np.linspace(0.0, max(0.0, total - window_s), n):
+        seg = media.slice_waveform(wav, float(s), float(s) + window_s)
+        if len(seg) < int(window_s * media.SAMPLE_RATE * 0.5):
+            continue
+        emb = embedder.embed(seg)
+        for c in clusters:
+            if cosine(emb, c[0]) >= threshold:
+                c[0] = (c[0] * c[1] + emb) / (c[1] + 1)
+                c[1] += 1
+                break
+        else:
+            clusters.append([emb, 1])
+    if not clusters:
+        return "unknown"
+    seen = sum(c[1] for c in clusters)
+    dominant = max(c[1] for c in clusters)
+    return "solo" if (len(clusters) == 1 or dominant / seen >= 0.8) else "panel"
 
 
 def transcribe(state: IngestState) -> dict:
-    """Transcribe videos to timestamped text (whisper, lazy). Per-video try/except for robustness."""
-    # Real path: download audio + whisper. Whisper large-v3 is multilingual (one model, no per-language
-    # pack); pass cfg.language.content as the language ("auto" lets whisper detect each video).
-    return {"transcripts": state.get("transcripts", {})}
+    """Download each video's audio and transcribe it to timestamped segments (whisper, lazy).
+
+    Per-video try/except keeps one failure from aborting the run. SOLO videos are clean single-speaker,
+    so their full transcript is written straight to knowledge; PANEL videos wait for voice isolation.
+    """
+    import json
+    cfg = state["config"]
+    if not cfg.voice.enabled:
+        return {"transcripts": state.get("transcripts", {})}
+    audio_dir = cfg.work_dir / "audio"
+    tdir = cfg.work_dir / "transcripts"
+    tdir.mkdir(parents=True, exist_ok=True)
+    kdir = cfg.work_dir / "knowledge_src"
+    kdir.mkdir(parents=True, exist_ok=True)
+    transcripts = dict(state.get("transcripts", {}))
+    errors: list[str] = []
+    for v in state.get("discovered", []):
+        vid = v["id"]
+        tpath = tdir / f"{vid}.json"
+        try:
+            if tpath.exists():  # resume-safe: skip already-transcribed videos
+                transcripts[vid] = str(tpath)
+                continue
+            wav_path = media.download_audio(v["url"], audio_dir, vid)
+            segments = media.transcribe_audio(wav_path, language=cfg.language.content)
+            tpath.write_text(json.dumps(segments, ensure_ascii=False), encoding="utf-8")
+            transcripts[vid] = str(tpath)
+            if v.get("kind") == "solo":  # clean single speaker -> keep the whole transcript
+                _write_transcript_md(kdir, vid, v.get("title", ""), segments)
+        except Exception as ex:
+            errors.append(f"transcribe {vid}: {ex!r}")
+    return {"transcripts": transcripts, "errors": state.get("errors", []) + errors}
+
+
+def _write_transcript_md(kdir: Path, video_id: str, title: str, segments: list[dict]) -> None:
+    text = " ".join(s["text"] for s in segments).strip()
+    if not text:
+        return
+    (kdir / f"video_{video_id}.md").write_text(
+        f"# {title or video_id}\nsource: video:{video_id}\n\n{text}\n", encoding="utf-8")
 
 
 def extract_voice_fingerprint(state: IngestState) -> dict:
-    """Build the voice fingerprint from SOLO videos and save it (sherpa-onnx, lazy)."""
+    """Build the figure's voice fingerprint from their SOLO videos and save it (sherpa-onnx, lazy)."""
     cfg = state["config"]
     fp_path = str(Path(cfg.voice.fingerprint_path).expanduser())
+    if not cfg.voice.enabled:
+        return {"fingerprint_path": fp_path}
+    import numpy as np
+    from .voice import SherpaOnnxEmbedder, build_fingerprint
     Path(fp_path).parent.mkdir(parents=True, exist_ok=True)
-    # Real path: SherpaOnnxEmbedder(language=cfg.language.content, configured_model=cfg.voice.embedding_model)
-    # routes the speaker model by language (Chinese -> CN-Celeb, else multilingual default), then
-    # embed solo audio -> build_fingerprint -> np.save(fp_path, fp).
-    return {"fingerprint_path": fp_path}
+    audio_dir = cfg.work_dir / "audio"
+    solo = [v for v in state.get("discovered", []) if v.get("kind") == "solo"]
+    errors: list[str] = []
+    embeddings: list = []
+    try:
+        if solo:
+            embedder = SherpaOnnxEmbedder(
+                language=cfg.language.content,
+                configured_model=cfg.voice.embedding_model or None,
+            )
+            collected = 0.0
+            for v in solo:
+                wav_path = audio_dir / f"{v['id']}.wav"
+                if not wav_path.exists():
+                    wav_path = media.download_audio(v["url"], audio_dir, v["id"])
+                wav = media.load_waveform(wav_path)
+                embeddings.append(embedder.embed(wav))
+                collected += len(wav) / media.SAMPLE_RATE
+                if collected >= cfg.voice.min_solo_seconds:
+                    break
+    except Exception as ex:
+        errors.append(f"fingerprint: {ex!r}")
+    if embeddings:
+        np.save(fp_path, build_fingerprint(embeddings))
+    else:
+        errors.append("fingerprint: no solo audio; panels cannot be voice-isolated")
+    return {"fingerprint_path": fp_path, "errors": state.get("errors", []) + errors}
 
 
 def isolate_by_voice(state: IngestState) -> dict:
-    """In panels, keep only turns matching the fingerprint (biometric, not vocabulary)."""
-    # Real path: for each panel, embed turns, call voice.isolate(turns, fingerprint, threshold);
-    # if result.low_confidence -> the confirm_low_confidence interrupt fires before writing.
-    return {"isolated": state.get("isolated", {})}
+    """In panel videos, keep only the turns whose voice embedding matches the fingerprint (biometric)."""
+    import json
+    cfg = state["config"]
+    isolated = dict(state.get("isolated", {}))
+    if not cfg.voice.enabled:
+        return {"isolated": isolated}
+    fp_path = Path(cfg.voice.fingerprint_path).expanduser()
+    if not fp_path.exists():  # no fingerprint -> nothing to match panels against
+        return {"isolated": isolated,
+                "errors": state.get("errors", []) + ["isolate: no fingerprint; panels skipped"]}
+    import numpy as np
+    from .voice import Turn, isolate as voice_isolate, SherpaOnnxEmbedder
+    fingerprint = np.load(fp_path)
+    audio_dir = cfg.work_dir / "audio"
+    tdir = cfg.work_dir / "transcripts"
+    kdir = cfg.work_dir / "knowledge_src"
+    kdir.mkdir(parents=True, exist_ok=True)
+    embedder = None
+    errors: list[str] = []
+    low_confidence: list[str] = []
+    for v in [d for d in state.get("discovered", []) if d.get("kind") == "panel"]:
+        vid = v["id"]
+        tpath = tdir / f"{vid}.json"
+        if not tpath.exists():
+            continue
+        try:
+            segments = json.loads(tpath.read_text(encoding="utf-8"))
+            wav = media.load_waveform(audio_dir / f"{vid}.wav")
+            if embedder is None:
+                embedder = SherpaOnnxEmbedder(
+                    language=cfg.language.content,
+                    configured_model=cfg.voice.embedding_model or None,
+                )
+            turns = []
+            for s in segments:
+                seg = media.slice_waveform(wav, s["start"], s["end"])
+                turns.append(Turn(text=s["text"], start=s["start"], end=s["end"],
+                                  embedding=embedder.embed(seg) if len(seg) else None))
+            res = voice_isolate(turns, fingerprint, cfg.voice.match_threshold)
+            isolated[vid] = [t.text for t in res.kept]
+            kept_text = " ".join(t.text for t in res.kept).strip()
+            if kept_text:
+                _write_kept_md(kdir, vid, v.get("title", ""), kept_text)
+            if res.low_confidence:
+                low_confidence.append(vid)
+        except Exception as ex:
+            errors.append(f"isolate {vid}: {ex!r}")
+    out: dict = {"isolated": isolated, "errors": state.get("errors", []) + errors}
+    if low_confidence:  # surfaced by the human-in-the-loop interrupt after this node
+        out["approvals"] = {**state.get("approvals", {}), "low_confidence_panels": low_confidence}
+    return out
+
+
+def _write_kept_md(kdir: Path, video_id: str, title: str, text: str) -> None:
+    (kdir / f"panel_{video_id}.md").write_text(
+        f"# {title or video_id}\nsource: video:{video_id} (voice-isolated)\n\n{text}\n", encoding="utf-8")
 
 
 def harvest_articles(state: IngestState) -> dict:
@@ -156,7 +315,15 @@ def write_knowledge(state: IngestState) -> dict:
 
 
 def brain_ingest(state: IngestState) -> dict:
-    """Mine knowledge into the brain and sync."""
+    """Mine knowledge into the brain.
+
+    Deliberately does NOT call brain.sync() here: sync is a gitignore-aware prune (it deletes any
+    drawer whose source path is gitignored), and knowledge_src always lives under the gitignored
+    work/<slug>/ tree by design (Constitution: real content stays out of the repo). mine() itself uses
+    --no-gitignore to add that content; calling sync() right after would immediately delete everything
+    mine() just added. Sync remains available for real use (pruning drawers whose source file was
+    actually deleted/moved) but must be run separately, deliberately, never chained after mine().
+    """
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from brain import get_brain
@@ -165,7 +332,6 @@ def brain_ingest(state: IngestState) -> dict:
     brain = get_brain(cfg)
     brain.init()
     count = brain.mine(kdir) if kdir.exists() else 0
-    brain.sync()
     return {"brain_status": {**brain.status(), "mined": count}}
 
 
