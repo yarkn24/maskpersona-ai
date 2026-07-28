@@ -5,10 +5,9 @@ multi-speaker panels only the turns whose voice matches that fingerprint are kep
 fragile "which speaker uses the most domain vocabulary" guess with a biometric match.
 
 The pure logic here (cosine, fingerprint, isolate) is dependency-free and unit-tested. The actual
-embedding of audio (sherpa-onnx with a wespeaker VoxCeleb model) is behind the `Embedder` protocol and
-imported lazily, so this module and its tests run without the heavy ML stack installed. The model is the
-same wespeaker-voxceleb-resnet34 used by the prior pyannote path, but ONNX-exported and pulled once from
-a public model release: no account and no access token, and it runs on CPU (no PyTorch for this step).
+embedding of audio uses the wespeaker-voxceleb-resnet34 ONNX model via sherpa-onnx, imported lazily
+so this module and its tests run without the heavy ML stack installed. The model is pulled once from
+a public release: no account and no access token, and it runs on CPU (no PyTorch for this step).
 """
 from __future__ import annotations
 
@@ -90,11 +89,8 @@ def extract_fingerprint(solo_audio_segments: Sequence, embedder: Embedder) -> np
 
 
 # Speaker-embedding model: wespeaker ResNet34 trained on VoxCeleb (English) with large-margin (LM)
-# fine-tuning, the same model the pyannote stack used for embeddings, but ONNX-exported and served
-# from the sherpa-onnx public model release (k2-fsa/sherpa-onnx, tag "speaker-recongition-models").
-# No account and no access token. The host/scheme are assembled from parts so this source stays free
-# of literal URLs (the repo's zero-trace convention, mirrored from audit/checks/grep_traces.py); the
-# resulting asset is a normal public download.
+# fine-tuning, ONNX-exported and served from the sherpa-onnx public model release
+# (k2-fsa/sherpa-onnx, tag "speaker-recongition-models"). No account and no access token.
 _MODEL_HOST = "github.com"
 _MODEL_REPO = "k2-fsa/sherpa-onnx"
 _MODEL_TAG = "speaker-recongition-models"  # upstream release tag's own spelling; do not "correct" it
@@ -135,8 +131,8 @@ def resolve_speaker_model(language: str | None = None, configured: str | None = 
 
 
 def speaker_model_url(filename: str = _DEFAULT_MODEL) -> str:
-    """Build the public download URL for a sherpa-onnx speaker-embedding model (assembled, not literal)."""
-    scheme = "ht" + "tps"  # split so no literal URL appears in source (zero-trace gate)
+    """Build the public download URL for a sherpa-onnx speaker-embedding model."""
+    scheme = "https"
     return f"{scheme}://{_MODEL_HOST}/{_MODEL_REPO}/releases/download/{_MODEL_TAG}/{filename}"
 
 
@@ -145,7 +141,7 @@ def _release_asset_names() -> set[str]:
     try:
         import json
         import urllib.request
-        scheme = "ht" + "tps"
+        scheme = "https"
         api = f"{scheme}://api.{_MODEL_HOST}/repos/{_MODEL_REPO}/releases/tags/{_MODEL_TAG}"
         with urllib.request.urlopen(api, timeout=20) as r:  # nosec - public read-only API
             data = json.load(r)
@@ -181,11 +177,11 @@ def ensure_speaker_model(filename: str = _DEFAULT_MODEL, dest_dir: str | Path | 
 class SherpaOnnxEmbedder:
     """Real embedder. Imported lazily so the rest of the system needs no onnxruntime/sherpa-onnx.
 
-    Uses sherpa-onnx with a wespeaker speaker-embedding model exported to ONNX (the same model family
-    the prior pyannote path used). The weights are pulled once from the sherpa-onnx public model
-    release: no account and no access token. Inference runs on CPU via ONNX Runtime (no PyTorch for
-    this step). When a file path is given, audio is loaded to 16 kHz mono via openai-whisper's
-    ffmpeg-based loader; a pre-decoded float32 waveform is also accepted directly.
+    Uses sherpa-onnx with the wespeaker-voxceleb-resnet34 ONNX speaker-embedding model. The weights
+    are pulled once from the sherpa-onnx public model release: no account and no access token.
+    Inference runs on CPU via ONNX Runtime (no PyTorch for this step). When a file path is given,
+    audio is loaded to 16 kHz mono via openai-whisper's ffmpeg-based loader; a pre-decoded float32
+    waveform is also accepted directly.
 
     Model selection: pass the persona's content `language` to pick the right model (Chinese -> CN-Celeb;
     any other language -> the multilingual VoxCeleb2 default). An explicit `model_path` overrides routing.

@@ -13,7 +13,7 @@ Core dependencies (pinned in pyproject.toml), typical licenses:
   - langgraph ........... MIT
   - langgraph-checkpoint-sqlite . MIT
   - langsmith ........... MIT
-  - mempalace ........... MIT (PyPI, verified)
+  - mempalace ........... MIT (PyPI)
   - yt-dlp .............. Unlicense (public domain)
   - numpy ............... BSD-3-Clause
 

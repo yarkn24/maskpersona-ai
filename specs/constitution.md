@@ -20,9 +20,12 @@ individuals. The framework processes only publicly accessible material.
 The repo ships no third-party copyrighted content. Generated transcripts and audio stay local and
 git-ignored. The only knowledge files in the repo are the clearly fictional `demo/john_doe/` set.
 
-## Article 5: No verbatim third-party text, no product names
-Techniques may be learned from public material, but no verbatim third-party system text and no company
-or product names are copied into the repo. Only abstract, re-implemented patterns.
+## Article 5: No verbatim third-party text; no persona-specific names hardcoded
+Techniques may be learned from public material, but no verbatim third-party system text is copied into
+the repo; only abstract, re-implemented patterns. Third-party tool and library names (e.g. LangGraph,
+mempalace, yt-dlp, Exa) are unavoidable and allowed. The constraint is that no real persona's company
+or product names are hardcoded anywhere in the framework; those exist only in runtime-generated files
+under git-ignored `work/`.
 
 ## Article 6: Grounded, not fabricated
 The persona runtime answers brain-first, web-second, takes a clear stance, cites sources, and refuses
@@ -43,5 +46,5 @@ runtime configuration value, not a repo-level choice.
 
 ## Enforcement
 Articles are checked by: schema validation (config), the public-figure gate (onboarding), the audit
-swarm at build end (genericity, GDPR/legal, generic-vs-case-specific text), the zero-trace grep, and
-the auditor allowlist. A violation is a build failure, not a warning.
+swarm at build end (genericity, GDPR/legal, generic-vs-case-specific text), and the auditor allowlist.
+A violation is a build failure, not a warning.

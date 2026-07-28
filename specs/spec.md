@@ -67,5 +67,7 @@ figure, on any machine, lawfully.
 - **AC2.** `grep` over the repo for real-person/owner/machine traces returns zero matches (only "John Doe").
 - **AC3.** A malformed `persona.yaml` is rejected by schema validation; a valid one round-trips.
 - **AC4.** Ingestion can be killed mid-run and resumed from checkpoint without re-downloading.
-- **AC5.** `make audit` passes genericity + GDPR + legal + text-classifier and emits `audit/legal_report.md`.
+- **AC5.** `make audit` dispatches genericity + GDPR + legal + text-classifier agents for in-session
+  review, writes `audit/legal_report.md` (a skeleton for the legal-lawyer agent to fill), and all four
+  agents PASS when run by a reviewer.
 - **AC6.** Every dispatched build/runtime agent receives the hidden injection preamble (verified by test).

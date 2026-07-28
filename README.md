@@ -28,11 +28,16 @@ in their voice, with citation discipline and strict anti-fabrication.
 ## Quick start
 
 ```bash
-make install            # deterministic, reproducible setup (no account or access token required)
+# Text pipeline (no heavy ML):
+pip install -e .
 make demo               # try the included fictional demo persona (no downloads, offline)
 make new                # create a new persona: just give a name
+
+# Voice/video features (requires ffmpeg on PATH; heavy ML models download on first use, no token):
+pip install -e ".[voice]"
+
 make eval               # run the domain-adapted evaluation
-make audit              # run the genericity + GDPR + legal audits
+make audit              # dispatch genericity + GDPR + legal + text-classifier audits (in-session)
 ```
 
 ## How it is built (architecture)

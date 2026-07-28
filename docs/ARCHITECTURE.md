@@ -19,14 +19,14 @@ the branching. See `specs/constitution.md` Article 7 and `specs/SPECS.md`.
 | config | `config/` | pydantic schema + loader (single source of truth for per-figure values) |
 | brain | `brain/` | swappable knowledge store (inmemory offline, mempalace default) |
 | templates | `templates/` | persona agent/command/core + abstract prompt patterns |
-| injection | `agents/_injection/` | hidden 4-mechanism preamble prepended to every agent |
+| injection | `agents/_injection/` | hidden 5-mechanism preamble prepended to every agent |
 | pipeline | `pipeline/` | LangGraph ingestion incl. voice-fingerprint isolation |
 | citation | `citation/` | verbatim phrase to source, persona-only corpus gate |
 | eval | `eval/` | domain-adapted questions, tracing, judging |
 | auditor | `auditor/` | bounded self-improvement loop |
-| audit | `audit/` | release audits (genericity, GDPR, text, legal) + zero-trace |
+| audit | `audit/` | release audits (genericity, GDPR, text, legal) |
 | installer | `installer/` | one deterministic ordered bootstrap |
 
 ## Build discipline
 Built with **Specs** (`specs/SPECS.md`): constitution to spec to plan to verifiable tasks to gated
-implement. Each phase ends with a gate (constitution check + zero-trace + tests).
+implement. Each phase ends with a gate (constitution check + tests).

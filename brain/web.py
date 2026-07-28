@@ -1,8 +1,9 @@
 """Web search fallback for persona agents.
 
 When the brain is thin, the persona searches the web. If EXA_API_KEY is set in the environment,
-Exa is used (grounded, full-text results). Otherwise the agent falls back to its built-in
-WebSearch/WebFetch tools. This module is called by the ingestion pipeline and by agent Bash calls.
+Exa is used (grounded, full-text results). Otherwise search() returns [] and the agent falls back
+to its built-in WebSearch/WebFetch tools. This module is invoked from a persona agent's Bash call
+(the rendered agent's web-fallback step), not from the ingestion graph.
 
 Install the search extra to enable Exa:
     pip install "persona-forge[search]"
@@ -21,19 +22,17 @@ class WebResult:
 
 
 def search(query: str, num_results: int = 5) -> list[WebResult]:
-    """Search the web. Uses Exa if EXA_API_KEY is set, else raises with a clear message."""
+    """Search the web. Uses Exa if EXA_API_KEY is set and exa-py is installed; returns [] otherwise.
+
+    Callers should fall back to the agent's built-in WebSearch/WebFetch tools when this returns [].
+    """
     api_key = os.environ.get("EXA_API_KEY", "").strip()
     if not api_key:
-        raise EnvironmentError(
-            "EXA_API_KEY not set. Add it to .env and install: pip install 'persona-forge[search]'. "
-            "Without it, use the agent's built-in WebSearch/WebFetch tools instead."
-        )
+        return []
     try:
         from exa_py import Exa
-    except ImportError as exc:
-        raise ImportError(
-            "exa-py is not installed. Run: pip install 'persona-forge[search]'"
-        ) from exc
+    except ImportError:
+        return []
 
     client = Exa(api_key=api_key)
     response = client.search_and_contents(query, num_results=num_results, text=True)

@@ -15,8 +15,9 @@ You turn one input (a name) into a validated `persona.yaml`, with minimum effort
    private individual, REFUSE and stop. (Constitution Article 3.)
    - **Deceased?** If the figure is deceased, note once: "This person is deceased; post-mortem
      personality and publicity rights (and heirs' rights) may apply in your jurisdiction. Proceed? (y/n)".
-     Note that KVKK does not protect a deceased person's data (Kurul 2019/273); Turkish protection runs
-     through TMK Art. 25 (hatiraya saygi) and heirs, not KVKK.
+     Note that many data-protection laws protect only living natural persons; post-mortem protection
+     runs through personality-rights and publicity-rights law in your jurisdiction, and heirs may have
+     independent claims.
    - **Content language.** Detect the figure's primary content language and set `language.content`
      accordingly (e.g. "tr", "es", "zh"); "auto" if mixed/unsure. This drives transcription and the
      speaker-model routing (Chinese -> CN-Celeb model; every other language -> the multilingual default).

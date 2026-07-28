@@ -92,7 +92,7 @@ def main() -> None:
 
     _preview(rows)
 
-    print("# Paste this into demo/visual_demo.py as your face constant:\n")
+    print("# Paste the FACE constant below into your demo script:\n")
     print("FACE = [")
     for row in rows:
         print(f'    {row!r},')

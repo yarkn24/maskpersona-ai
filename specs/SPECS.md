@@ -17,7 +17,7 @@ it drifts, it is not reproducible, and "done" is whatever the author says it is.
    `rollback:` note, not just a checkbox. A task is complete only when its `verify` passes, not when the
    author edits a `[ ]` to `[x]`.
 3. **Phase Gates.** Tasks are grouped into phases; a phase cannot start until the previous phase's
-   **gate** passes (zero-trace grep + schema validity + tests green). Gates make failure local and loud.
+   **gate** passes (schema validity + tests green). Gates make failure local and loud.
 4. **Anti-drift Execution.** Before working a task, the executor re-binds the live context it needs
    (constitution + spec slice + the prior task's real output) instead of trusting memory. The executor
    feeds the needed context every turn rather than relying on what it remembers.
@@ -48,8 +48,8 @@ For each task, in dependency order:
 2. **Build:** make only the change the task names (surgical; nothing speculative).
 3. **Verify:** run the task's `verify:` command. If it fails, do NOT mark done; fix or `rollback:`.
 4. **Lock:** if the task ships an artifact, record its checksum.
-5. **Gate:** at the end of a phase, run the phase gate (constitution check + zero-trace + tests). The
-   next phase does not start until the gate is green.
+5. **Gate:** at the end of a phase, run the phase gate (constitution check + tests). The next phase
+   does not start until the gate is green.
 
 ## Constitution-first rule
 
