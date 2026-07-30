@@ -19,6 +19,7 @@ def discover(state: IngestState) -> dict:
     cfg = state["config"]
     exclude = set(cfg.sources.exclude_ids)
     found: list[dict] = []
+    errors: list[str] = []
     try:
         import yt_dlp  # lazy
         q = f"ytsearch{cfg.sources.video_search_count}:{cfg.sources.video_search_query}"
@@ -30,12 +31,15 @@ def discover(state: IngestState) -> dict:
             if vid and vid not in exclude:
                 found.append({"id": vid, "url": e.get("url") or e.get("webpage_url", ""),
                               "title": e.get("title", ""), "kind": "unknown"})
-    except Exception as ex:  # discovery is best-effort; seed_video_urls can substitute
-        return {"discovered": found, "errors": [f"discover: {ex!r}"]}
-    # include any explicit seed urls
+    except Exception as ex:  # discovery is best-effort; seed_video_urls below still substitute
+        errors.append(f"discover: {ex!r}")
+    # include any explicit seed urls, whether or not search discovery above succeeded
     for u in cfg.sources.seed_video_urls:
         found.append({"id": u, "url": u, "title": "", "kind": "unknown"})
-    return {"discovered": found}
+    out: dict = {"discovered": found}
+    if errors:
+        out["errors"] = errors
+    return out
 
 
 def assess_breadth(state: IngestState) -> dict:
@@ -136,22 +140,38 @@ def transcribe(state: IngestState) -> dict:
                 transcripts[vid] = str(tpath)
                 continue
             wav_path = media.download_audio(v["url"], audio_dir, vid)
-            segments = media.transcribe_audio(wav_path, language=cfg.language.content)
+            segments = media.transcribe_audio(wav_path, language=cfg.language.content,
+                                              model_size=cfg.voice.whisper_model or "base")
             tpath.write_text(json.dumps(segments, ensure_ascii=False), encoding="utf-8")
             transcripts[vid] = str(tpath)
             if v.get("kind") == "solo":  # clean single speaker -> keep the whole transcript
-                _write_transcript_md(kdir, vid, v.get("title", ""), segments)
+                _write_transcript_md(kdir, vid, v.get("title", ""), segments, cfg.language.content)
         except Exception as ex:
             errors.append(f"transcribe {vid}: {ex!r}")
     return {"transcripts": transcripts, "errors": state.get("errors", []) + errors}
 
 
-def _write_transcript_md(kdir: Path, video_id: str, title: str, segments: list[dict]) -> None:
-    text = " ".join(s["text"] for s in segments).strip()
-    if not text:
+def _format_timestamp(t: float) -> str:
+    m, s = divmod(int(round(t)), 60)
+    return f"{m:02d}:{s:02d}"
+
+
+def _chunks_to_md_body(chunks) -> str:
+    return "\n\n".join(f"## [t={_format_timestamp(c.start)}-{_format_timestamp(c.end)}]\n{c.text}"
+                       for c in chunks)
+
+
+def _write_transcript_md(kdir: Path, video_id: str, title: str, segments: list[dict],
+                         language: str | None = None) -> None:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from brain.sentence_chunker import chunk_segments
+    chunks = chunk_segments(segments, language=language)
+    if not chunks:
         return
     (kdir / f"video_{video_id}.md").write_text(
-        f"# {title or video_id}\nsource: video:{video_id}\n\n{text}\n", encoding="utf-8")
+        f"# {title or video_id}\nsource: video:{video_id}\n\n{_chunks_to_md_body(chunks)}\n",
+        encoding="utf-8")
 
 
 def extract_voice_fingerprint(state: IngestState) -> dict:
@@ -233,9 +253,8 @@ def isolate_by_voice(state: IngestState) -> dict:
                                   embedding=embedder.embed(seg) if len(seg) else None))
             res = voice_isolate(turns, fingerprint, cfg.voice.match_threshold)
             isolated[vid] = [t.text for t in res.kept]
-            kept_text = " ".join(t.text for t in res.kept).strip()
-            if kept_text:
-                _write_kept_md(kdir, vid, v.get("title", ""), kept_text)
+            if res.kept:
+                _write_kept_md(kdir, vid, v.get("title", ""), res.kept, cfg.language.content)
             if res.low_confidence:
                 low_confidence.append(vid)
         except Exception as ex:
@@ -246,9 +265,17 @@ def isolate_by_voice(state: IngestState) -> dict:
     return out
 
 
-def _write_kept_md(kdir: Path, video_id: str, title: str, text: str) -> None:
+def _write_kept_md(kdir: Path, video_id: str, title: str, turns: list, language: str | None = None) -> None:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from brain.sentence_chunker import chunk_segments
+    segments = [{"start": t.start, "end": t.end, "text": t.text} for t in turns]
+    chunks = chunk_segments(segments, language=language)
+    if not chunks:
+        return
     (kdir / f"panel_{video_id}.md").write_text(
-        f"# {title or video_id}\nsource: video:{video_id} (voice-isolated)\n\n{text}\n", encoding="utf-8")
+        f"# {title or video_id}\nsource: video:{video_id} (voice-isolated)\n\n{_chunks_to_md_body(chunks)}\n",
+        encoding="utf-8")
 
 
 def harvest_articles(state: IngestState) -> dict:
@@ -259,8 +286,7 @@ def harvest_articles(state: IngestState) -> dict:
     """
     cfg = state["config"]
     from .search import ExaSearchClient
-    client = ExaSearchClient(result_count=getattr(cfg, "search", None) and
-                             cfg.search.result_count or 10)
+    client = ExaSearchClient(result_count=cfg.search.result_count)
     found: list[dict] = []
 
     # 1. Search by name + domain topics
@@ -288,7 +314,7 @@ def harvest_articles(state: IngestState) -> dict:
 def write_knowledge(state: IngestState) -> dict:
     """Write harvested articles and transcripts as knowledge_src/*.md files."""
     cfg = state["config"]
-    kdir = Path("work") / cfg.persona.slug / "knowledge_src"
+    kdir = cfg.work_dir / "knowledge_src"
     kdir.mkdir(parents=True, exist_ok=True)
 
     articles = state.get("harvested_articles", [])
@@ -320,7 +346,7 @@ def brain_ingest(state: IngestState) -> dict:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from brain import get_brain
     cfg = state["config"]
-    kdir = Path("work") / cfg.persona.slug / "knowledge_src"
+    kdir = cfg.work_dir / "knowledge_src"
     brain = get_brain(cfg)
     brain.init()
     count = brain.mine(kdir) if kdir.exists() else 0
@@ -334,9 +360,16 @@ def refresh_citations(state: IngestState) -> dict:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from citation import build_index
     cfg = state["config"]
-    kdir = Path("work") / cfg.persona.slug / "knowledge_src"
-    rows = build_index(cfg, kdir, out_path=cfg.citations.index_path) if kdir.exists() else []
-    return {"citation_index": cfg.citations.index_path, "errors": state.get("errors", []) + ([] if rows else [])}
+    kdir = cfg.work_dir / "knowledge_src"
+    notes: list[str] = []
+    if not kdir.exists():
+        rows = []
+        notes.append("refresh_citations: knowledge_src does not exist yet; citation index left empty")
+    else:
+        rows = build_index(cfg, kdir, out_path=cfg.citations.index_path)
+        if not rows:
+            notes.append("refresh_citations: no signature-claim rows matched; citation index empty")
+    return {"citation_index": cfg.citations.index_path, "errors": state.get("errors", []) + notes}
 
 
 # Ordered node list used by the graph.

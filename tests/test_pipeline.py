@@ -10,6 +10,8 @@ sys.path.insert(0, str(ROOT))
 from pipeline.voice import Turn, build_fingerprint, isolate, cosine, extract_fingerprint  # noqa: E402
 from pipeline.graph import build_graph  # noqa: E402
 from pipeline.checkpoint import memory_checkpointer  # noqa: E402
+from pipeline.nodes import discover  # noqa: E402
+from config import PersonaConfig  # noqa: E402
 
 
 # Synthetic 2-speaker fixture: speaker A ~ [1,0], speaker B ~ [0,1].
@@ -56,6 +58,38 @@ def test_graph_compiles_with_checkpointer():
     assert g is not None
     # the interrupt points exist as nodes
     assert "discover" in g.get_graph().nodes
+
+
+def test_discover_falls_back_to_seed_urls_when_search_fails():
+    """discover() must not lose seed_video_urls just because yt-dlp search discovery failed --
+    the seed loop is the documented substitute for exactly that scenario."""
+    import types
+
+    fake_yt_dlp = types.ModuleType("yt_dlp")
+
+    class BoomYDL:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def extract_info(self, *a, **k):
+            raise RuntimeError("network unavailable")
+
+    fake_yt_dlp.YoutubeDL = BoomYDL
+    sys.modules["yt_dlp"] = fake_yt_dlp
+
+    cfg = PersonaConfig.model_validate({
+        "persona": {"name": "John Doe", "is_public_figure": True, "identity_confirmed": True},
+        "sources": {"seed_video_urls": ["https://example.com/seed1", "https://example.com/seed2"]},
+    })
+    out = discover({"config": cfg})
+    assert len(out["discovered"]) == 2
+    assert "errors" in out and "discover:" in out["errors"][0]
 
 
 def test_no_vocabulary_heuristic_in_pipeline():

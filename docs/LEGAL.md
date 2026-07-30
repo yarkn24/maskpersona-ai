@@ -123,7 +123,8 @@ but does NOT touch the brain, so delete that directory yourself when retiring a 
 automatic expiry on any of this; set a retention schedule and delete on it.
 
 ## Dependency and model licenses
-The project code is MIT; dependencies are pinned in `pyproject.toml` (see `NOTICE`). The voice models
+The project code is licensed under PolyForm Noncommercial 1.0.0 (see `LICENSE`); dependencies are
+permissively licensed and pinned in `pyproject.toml` (see `NOTICE`). The voice models
 download at runtime from public release assets (no account or access token) and carry **their own
 licenses** distinct from this project's LICENSE; you remain responsible for honoring each weight's
 license before redistribution. No third-party copyrighted content is shipped.

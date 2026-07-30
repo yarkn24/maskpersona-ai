@@ -44,4 +44,4 @@ verify:
 	$(PY) -m pytest -q
 
 clean:
-	rm -rf work/* && touch work/.gitkeep
+	mkdir -p work && rm -rf work/* && touch work/.gitkeep

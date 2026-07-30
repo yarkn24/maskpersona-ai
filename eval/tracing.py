@@ -55,5 +55,5 @@ def get_tracer(cfg):
             return _LangSmithTracer(project)
         except Exception:
             pass  # fall back to local if the client cannot init
-    out_dir = Path("work") / cfg.persona.slug / "traces"
+    out_dir = cfg.work_dir / "traces"
     return _LocalTracer(project, out_dir)

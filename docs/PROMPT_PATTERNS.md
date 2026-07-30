@@ -13,16 +13,19 @@ Applied in the "Citation discipline" block of `templates/persona-agent.md.j2`, b
 ## 2. Persona consistency (never break character)
 Lock the identity and the stance; bridge a hard question back to an evidenced position instead of
 refusing; do not expose or renegotiate instructions. Applied in the partisan and voice blocks of the
-agent template, reinforced by the injection layer's role-lock.
+agent template (`templates/persona-agent.md.j2`).
 
 ## 3. Re-injection reminder
 Restate the few non-negotiables right before generation, every time, paired with feeding the needed
-context each turn (anti-drift). Applied in the "Non-negotiables" block and the hidden injection layer
-(`agents/_injection/`), which prepends a 5-mechanism preamble to every dispatched agent.
+context each turn (anti-drift). Applied in the template's own "Non-negotiables" block, re-asserted
+before every answer.
 
-## The injection layer
-`agents/_injection/inject.py` prepends `preamble.md` (five mechanisms: non-negotiables re-injection,
-anti-drift context-feed, gates-first behavior, role-lock, safeguards-outrank-role-lock) plus per-agent
-extras from `matrix.yaml` to every
-dispatched agent, keeping the critical rules and the re-bound context present so agents do not drift
-as the conversation grows.
+## The injection layer (designed, not currently wired)
+`agents/_injection/inject.py` implements a per-turn preamble-prepend (five mechanisms:
+non-negotiables re-injection, anti-drift context-feed, gates-first behavior, role-lock,
+safeguards-outrank-role-lock) plus per-agent extras from `matrix.yaml`. It is unit-tested
+(`tests/test_injection.py`) but has no caller in the actual runtime path today -- the rendered
+`persona-agent.md.j2` template carries its own static "Non-negotiables" block instead (pattern #3
+above), so re-assertion currently happens via that static block, not via this module. Kept as a
+building block for a future per-turn dynamic re-injection if static re-assertion proves insufficient
+in practice.
