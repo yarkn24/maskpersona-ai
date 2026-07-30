@@ -1,5 +1,10 @@
 # MaskPersona AI
 
+<p align="center">
+  <img src="assets/hero-mask-choice.png" alt="A figure considering which mask to wear" width="49%" />
+  <img src="assets/hero-persona-scan.png" alt="Close-up biometric persona scan" width="49%" />
+</p>
+
 Build a grounded, evidence-based **persona advisor bot** of any **public figure**, from their public
 content, with one command. You give a name; MaskPersona AI discovers their public talks and articles,
 isolates their voice, builds an isolated knowledge brain, and renders a Claude Code agent that answers
