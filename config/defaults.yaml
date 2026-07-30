@@ -3,9 +3,10 @@
 
 transcription:
   # openai-whisper large-v3 is ONE multilingual model (99 languages), so there is no per-language
-  # "pack" to install. Language is auto-detected per video, or pinned via persona language.content.
+  # "pack" to install. Language is NOT set here -- persona.yaml's language.content already drives
+  # per-video transcription language (config/schema.py::Language.content), so a second "language"
+  # key here would just be a confusing, unwired duplicate.
   model: "large-v3"          # weights download automatically, no token
-  language: "auto"           # auto-detect per video (overridden by persona language.content if set)
 
 voice:
   # Speaker-embedding via sherpa-onnx (no account, no token; CPU). Default is wespeaker ResNet34-LM
@@ -24,6 +25,3 @@ eval:
   num_questions: 100
   pass_threshold: 0.6
   flexibility_threshold: 0.8
-
-# Where brains live (outside the git tree). <slug> is substituted at runtime.
-brain_root: "~/personaforge_brains"

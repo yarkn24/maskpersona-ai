@@ -1,8 +1,9 @@
 # Evaluation rubric
 
 Five generic dimensions, scored 0..1. They are domain-independent: they work for any persona, because
-they measure HOW the persona answers, not WHAT field it is in. Primary judge is Opus in-session; an
-optional local model judge can smoke-test but is less reliable.
+they measure HOW the persona answers, not WHAT field it is in. Primary judge is Sonnet in-session
+(rubric scoring is grunt work; Opus stays reserved for the persona's own answers); an optional local
+model judge can smoke-test but is less reliable.
 
 | Dimension | Asks | Low (0) | High (1) |
 |---|---|---|---|

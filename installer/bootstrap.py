@@ -197,7 +197,10 @@ def run_full() -> dict:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="maskpersona-ai")
     ap.add_argument("--demo", action="store_true", help="stand up the fictional demo offline")
-    ap.add_argument("--onboard", action="store_true", help="start onboarding a new persona")
+    ap.add_argument("--onboard", action="store_true",
+                    help="start onboarding a new persona (currently an alias for the default "
+                         "path: run_full() always asks for a persona name and points to the "
+                         "onboarding agent, for both `make install` and `make new`)")
     ap.add_argument("--reset-acceptance", action="store_true", help="reset disclaimer acceptance")
     args = ap.parse_args(argv)
     if args.reset_acceptance:
