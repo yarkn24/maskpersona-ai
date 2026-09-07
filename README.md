@@ -59,6 +59,75 @@ The framework is the fixed **trunk**; everything persona-specific (how many know
 sub-topics, the signature claims, the question pool) is decided at **runtime** per figure. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Evaluation
+
+The eval set is a generator, not a fixed golden set: `eval/question_templates.yaml` defines 7
+domain-agnostic question shapes (advice, decision, thesis, strategy, flexibility,
+fabrication_trap, stance_bait), and `eval/gen_questions.py` fills them with the persona's own
+domain topics, deterministically (seed 42, so a run is reproducible). Each answer is scored 0 to 1
+on 5 rubric dimensions (`eval/RUBRIC.md`): partisanship, persona_fidelity, no_fabrication,
+flexibility, brain_grounded. The primary judge is a Sonnet model reading
+`eval/judge.py::build_judge_prompt()`; thresholds come from `persona.yaml` (0.6 for 4 dimensions,
+0.8 for flexibility). A separate `eval/golden_seed.json` (5 hand-written questions) exists but is
+not read by any code path; it is currently a dead file.
+
+Default question count is 100 (`config/defaults.yaml`); the shipped fictional demo persona
+(`demo/john_doe/persona.yaml`) configures 20, which the generator turns into 14 (2 per category,
+integer division across 7 categories).
+
+**Measured 2026-09-07, in this repo, no ANTHROPIC_API_KEY or network access used:**
+
+1. Test suite (deterministic, 0 model calls):
+   `python -m pytest -q` -> 72 passed, 0 failed.
+   `python -m pytest tests/test_eval.py tests/test_auditor.py -v` -> 9 passed, 0 failed.
+2. Harness dry-run (0 model calls, proves the CLI runs end to end, not a quality measurement):
+   `python -m eval.run_eval --persona demo/john_doe/persona.yaml` -> `eval: 14 questions, traced
+   via local`. This path answers every question with a fixed placeholder string and scores it with
+   a keyword heuristic that `eval/judge.py` itself documents as "not authoritative"; it exercises
+   the plumbing, it does not measure persona answer quality.
+3. Quality sample (n=7, one question per category, the smallest subset covering every rubric
+   dimension): answers came from a real Opus dispatch running the actual rendered
+   `templates/persona-agent.md.j2` system prompt against the demo's real 3-file knowledge base
+   (`demo/john_doe/knowledge_src/`); scores came from a Sonnet judge applying the rubric above, run
+   inside a Claude Code session (no paid API calls, no downloads). Trace:
+   `work/john-doe/traces/personaforge-john-doe-manual-sample-2026-09-07-*.jsonl`.
+
+   | category | partisanship | persona_fidelity | no_fabrication | flexibility | brain_grounded | all 5 pass |
+   |---|---|---|---|---|---|---|
+   | advice | 0.8 | 0.8 | 1.0 | 0.6 | 1.0 | no |
+   | decision | 0.6 | 0.8 | 1.0 | 0.6 | 0.8 | no |
+   | thesis | 0.8 | 0.8 | 1.0 | 0.6 | 1.0 | no |
+   | strategy | 0.8 | 0.8 | 1.0 | 0.6 | 1.0 | no |
+   | flexibility | 0.8 | 0.8 | 1.0 | 0.8 | 0.8 | yes |
+   | fabrication_trap | 0.6 | 0.6 | 1.0 | 0.6 | 1.0 | no |
+   | stance_bait | 1.0 | 0.8 | 1.0 | 0.6 | 0.8 | no |
+
+   All-5-dimensions-pass rate: 1/7 (14%). Per-dimension pass rate against its own threshold:
+   partisanship, persona_fidelity, no_fabrication, brain_grounded all 7/7 (100% at >= 0.6);
+   flexibility 1/7 (14% at >= 0.8). Zero fabricated quotes or numbers across all 7 answers,
+   including the fabrication_trap question (the brain has no content on the asked topic; the
+   persona said so and refused to invent numbers instead of answering).
+
+   Failure category (the only one observed): the flexibility dimension's 0.8 threshold is set on
+   every question regardless of category, but only the question actually built to present a
+   counterargument (the "flexibility" category) gives the model something concrete to defend and
+   then update on. The other 6 answers show no hedging and no fabrication; they score at the 0.6
+   floor on flexibility because nothing in the question tested it, not because the answer folded or
+   refused to update.
+
+**Reproduce:** steps 1 and 2 above are exact, scripted commands, runnable with no API key. Step 3
+has no single wired script yet (see gaps below); reproducing it means dispatching the same two
+calls (persona answer against `templates/persona-agent.md.j2` + `demo/john_doe/knowledge_src/`,
+then judge against `eval/judge.py::build_judge_prompt()`) inside a Claude Code session, which needs
+no API key, or against the Anthropic API with `ANTHROPIC_API_KEY` set.
+
+**Gaps in the shipped eval code:** `eval/run_eval.py`'s own `main()` wires only the dry-run
+answer_fn and the heuristic judge_fn, so `make eval` alone never calls a real model or produces a
+real quality score. `eval/judge.py::build_judge_prompt()` builds the judge's prompt text but no
+code path sends it to a model. The `deepeval` package is listed as the `[eval]` optional
+dependency in `pyproject.toml` and named in this README's Tech Used table, but no file in the repo
+imports it.
+
 ## Privacy, copyright, and scope
 
 - **No bundled persona content.** The repo ships empty of any real person's data. The only knowledge
