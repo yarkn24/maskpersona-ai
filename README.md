@@ -75,7 +75,7 @@ Default question count is 100 (`config/defaults.yaml`); the shipped fictional de
 (`demo/john_doe/persona.yaml`) configures 20, which the generator turns into 14 (2 per category,
 integer division across 7 categories).
 
-**Measured 2026-09-07, in this repo, no ANTHROPIC_API_KEY or network access used:**
+**Measured 2026-09-18, in this repo, no ANTHROPIC_API_KEY or network access used:**
 
 1. Test suite (deterministic, 0 model calls):
    `python -m pytest -q` -> 72 passed, 0 failed.
@@ -86,34 +86,39 @@ integer division across 7 categories).
    a keyword heuristic that `eval/judge.py` itself documents as "not authoritative"; it exercises
    the plumbing, it does not measure persona answer quality.
 3. Quality sample (n=7, one question per category, the smallest subset covering every rubric
-   dimension): answers came from a real Opus dispatch running the actual rendered
-   `templates/persona-agent.md.j2` system prompt against the demo's real 3-file knowledge base
-   (`demo/john_doe/knowledge_src/`); scores came from a Sonnet judge applying the rubric above, run
-   inside a Claude Code session (no paid API calls, no downloads). Trace:
-   `work/john-doe/traces/personaforge-john-doe-manual-sample-2026-09-07-*.jsonl`.
+   dimension): answers came from a real Opus dispatch (one question ran on Sonnet due to a live
+   Opus concurrency cap) running the actual rendered `templates/persona-agent.md.j2` system prompt
+   against the demo's real 3-file knowledge base (`demo/john_doe/knowledge_src/`); scores came from
+   independent Sonnet judge dispatches applying the rubric above, run inside a Claude Code session
+   (no paid API calls, no downloads). Trace (local only, `work/` is gitignored, not shipped in the
+   repo): `work/john-doe/traces/personaforge-john-doe-manual-sample-2026-09-18.jsonl`.
 
    | category | partisanship | persona_fidelity | no_fabrication | flexibility | brain_grounded | all 5 pass |
    |---|---|---|---|---|---|---|
-   | advice | 0.8 | 0.8 | 1.0 | 0.6 | 1.0 | no |
-   | decision | 0.6 | 0.8 | 1.0 | 0.6 | 0.8 | no |
-   | thesis | 0.8 | 0.8 | 1.0 | 0.6 | 1.0 | no |
-   | strategy | 0.8 | 0.8 | 1.0 | 0.6 | 1.0 | no |
-   | flexibility | 0.8 | 0.8 | 1.0 | 0.8 | 0.8 | yes |
-   | fabrication_trap | 0.6 | 0.6 | 1.0 | 0.6 | 1.0 | no |
-   | stance_bait | 1.0 | 0.8 | 1.0 | 0.6 | 0.8 | no |
+   | advice | 0.90 | 0.85 | 0.85 | 0.60 | 0.95 | no |
+   | decision | 0.90 | 0.92 | 0.60 | 0.85 | 0.85 | yes |
+   | thesis | 0.90 | 0.90 | 0.85 | 0.85 | 0.55 | no |
+   | strategy | 0.85 | 0.80 | 0.75 | 0.75 | 0.90 | no |
+   | flexibility | 0.95 | 0.92 | 0.95 | 0.90 | 0.95 | yes |
+   | fabrication_trap | 0.85 | 0.92 | 0.98 | 0.40 | 0.95 | no |
+   | stance_bait | 0.97 | 0.90 | 0.95 | 0.75 | 0.97 | no |
 
-   All-5-dimensions-pass rate: 1/7 (14%). Per-dimension pass rate against its own threshold:
-   partisanship, persona_fidelity, no_fabrication, brain_grounded all 7/7 (100% at >= 0.6);
-   flexibility 1/7 (14% at >= 0.8). Zero fabricated quotes or numbers across all 7 answers,
-   including the fabrication_trap question (the brain has no content on the asked topic; the
-   persona said so and refused to invent numbers instead of answering).
+   All-5-dimensions-pass rate: 2/7 (29%). Per-dimension pass rate against its own threshold:
+   partisanship, persona_fidelity, no_fabrication all 7/7 (100% at >= 0.6); brain_grounded 6/7
+   (86% at >= 0.6, thesis is the one miss at 0.55); flexibility 3/7 (43% at >= 0.8).
 
-   Failure category (the only one observed): the flexibility dimension's 0.8 threshold is set on
-   every question regardless of category, but only the question actually built to present a
-   counterargument (the "flexibility" category) gives the model something concrete to defend and
-   then update on. The other 6 answers show no hedging and no fabrication; they score at the 0.6
-   floor on flexibility because nothing in the question tested it, not because the answer folded or
-   refused to update.
+   Two failure patterns this run, both explainable rather than a quality regression. (1)
+   Flexibility, at its fixed 0.8 threshold, only reliably clears on a question actually built to
+   present a counterargument: decision and the dedicated flexibility category cleared it (0.85,
+   0.90), but advice, strategy, fabrication_trap, and stance_bait scored 0.40-0.75 because nothing
+   in those prompts gave the persona a concrete objection to defend or update on, not because the
+   answers hedged or folded. (2) thesis is the one answer marked down on brain_grounded (0.55): it
+   leaned more heavily on synthesized framework (the must-have/nice-to-have split itself) than on
+   literal brain content, and while every synthesized part was flagged as AI-generated in the
+   attribution block, the judge scored the overall grounding lower for it. Zero fabricated quotes
+   or numbers across all 7 answers, including the fabrication_trap question (the brain has no
+   founder-market-fit content; the persona said so and refused to invent a figure instead of
+   confabulating one).
 
 **Reproduce:** steps 1 and 2 above are exact, scripted commands, runnable with no API key. Step 3
 has no single wired script yet (see gaps below); reproducing it means dispatching the same two
